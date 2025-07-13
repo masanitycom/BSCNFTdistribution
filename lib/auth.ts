@@ -25,7 +25,7 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export async function getSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 
   if (!token) return null;
@@ -44,7 +44,7 @@ export async function getSession() {
 }
 
 export async function logout() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
 
   if (token) {
