@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "app/api/auth/login/route.ts": {
+      "runtime": "nodejs18.x"
+    },
+    "app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "regions": ["hnd1"]
+}
