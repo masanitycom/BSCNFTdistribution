@@ -51,10 +51,12 @@ export async function GET(
         let baseURI = "";
         try {
           // This might fail if the function doesn't exist
-          const baseURIResult = await contract.baseURI?.();
-          baseURI = baseURIResult || "";
+          if (contract.baseURI) {
+            const baseURIResult = await contract.baseURI();
+            baseURI = baseURIResult || "";
+          }
         } catch (e) {
-          console.log("Base URI function not available or failed");
+          console.log("Base URI function not available or failed:", e instanceof Error ? e.message : String(e));
         }
 
         contractInfo = {
@@ -70,12 +72,12 @@ export async function GET(
           try {
             tokenURIResult = await contract.tokenURI(1);
           } catch (e) {
-            tokenURIResult = `Error getting tokenURI: ${e.message}`;
+            tokenURIResult = `Error getting tokenURI: ${e instanceof Error ? e.message : String(e)}`;
           }
         }
 
       } catch (error) {
-        contractInfo = { error: error.message };
+        contractInfo = { error: error instanceof Error ? error.message : String(error) };
       }
     }
 
