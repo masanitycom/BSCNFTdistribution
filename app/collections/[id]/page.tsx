@@ -11,6 +11,7 @@ interface Collection {
   symbol: string;
   description?: string;
   image_ipfs?: string;
+  metadata_ipfs?: string;
   contract_address?: string;
   next_token_id: number;
   created_at: string;

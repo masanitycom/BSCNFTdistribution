@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getIPFSUrl } from "@/lib/ipfs";
+// Helper function for IPFS URL
+const getIPFSUrl = (hash: string) => `https://gateway.pinata.cloud/ipfs/${hash}`;
 
 interface NFTDisplay {
   id: string;
@@ -33,7 +34,7 @@ export default function GalleryPage() {
         setNfts(data.nfts);
         
         // Extract unique collections
-        const uniqueCollections = [...new Set(data.nfts.map((nft: NFTDisplay) => nft.collection.name))];
+        const uniqueCollections = [...new Set(data.nfts.map((nft: NFTDisplay) => nft.collection.name))] as string[];
         setCollections(uniqueCollections);
       }
     } catch (error) {
