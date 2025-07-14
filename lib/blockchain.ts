@@ -2,16 +2,19 @@ import { ethers } from "ethers";
 import CollectionABI from "@/contracts/Collection.json";
 
 export function getProvider(): ethers.JsonRpcProvider {
-  const chainId = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAIN_ID);
+  const chainId = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAIN_ID) || 56;
   const rpcUrl = chainId === 97 
-    ? process.env.BSC_TEST_RPC! 
-    : process.env.BSC_MAIN_RPC!;
+    ? process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545/"
+    : process.env.BSC_RPC_URL || "https://bsc-dataseed1.binance.org/";
   
+  console.log("Using RPC URL:", rpcUrl, "for chain:", chainId);
   return new ethers.JsonRpcProvider(rpcUrl);
 }
 
 export function getWallet(): ethers.Wallet {
   const privateKey = process.env.PRIVATE_KEY;
+  console.log("Private key configured:", !!privateKey);
+  
   if (!privateKey) {
     throw new Error("Private key not configured");
   }
