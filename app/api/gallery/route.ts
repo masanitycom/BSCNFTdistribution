@@ -11,10 +11,7 @@ export async function GET() {
       `)
       .order("created_at", { ascending: false });
 
-    console.log("Gallery NFTs debug:", { nfts, error });
-
     if (error) {
-      console.error("Database error:", error);
       return NextResponse.json(
         { error: "NFTの取得に失敗しました" },
         { status: 500 }
@@ -27,14 +24,11 @@ export async function GET() {
       collection: nft.collections // Supabase returns as 'collections'
     }));
 
-    console.log("Transformed NFTs:", transformedNFTs);
-
     return NextResponse.json({
       nfts: transformedNFTs,
       count: transformedNFTs.length
     });
   } catch (error) {
-    console.error("API error:", error);
     return NextResponse.json(
       { error: "サーバーエラーが発生しました" },
       { status: 500 }

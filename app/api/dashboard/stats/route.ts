@@ -19,7 +19,7 @@ export async function GET() {
       .order("created_at", { ascending: false });
 
     if (collectionsError) {
-      console.error("Collections error:", collectionsError);
+      throw collectionsError;
     }
 
     // Filter out hidden collections
@@ -33,7 +33,7 @@ export async function GET() {
       .select("id");
 
     if (nftsError) {
-      console.error("NFTs error:", nftsError);
+      throw nftsError;
     }
 
     // Get unique recipients count (as a proxy for distribution jobs)
@@ -42,17 +42,12 @@ export async function GET() {
       .select("owner_address");
 
     if (recipientsError) {
-      console.error("Recipients error:", recipientsError);
+      throw recipientsError;
     }
 
     const uniqueRecipients = recipients ? 
       [...new Set(recipients.map(nft => nft.owner_address))].length : 0;
 
-    console.log("Dashboard stats:", {
-      collections: visibleCollections.length,
-      nfts: (nfts || []).length,
-      recipients: uniqueRecipients
-    });
 
     return NextResponse.json({
       totalCollections: visibleCollections.length,
@@ -61,7 +56,6 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error("Dashboard stats error:", error);
     return NextResponse.json(
       { error: "統計の取得に失敗しました" },
       { status: 500 }

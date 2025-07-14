@@ -4,40 +4,34 @@ import { getSession } from "@/lib/auth";
 
 export async function GET() {
   try {
-    console.log("Collections GET: checking session...");
     const session = await getSession();
-    console.log("Collections GET: session result:", !!session);
     
     if (!session) {
-      console.log("Collections GET: No session, returning 401");
       return NextResponse.json(
         { error: "認証が必要です" },
         { status: 401 }
       );
     }
 
-    // First try without is_hidden filter to see all collections
-    const { data: allCollections, error: allError } = await supabase
+    const { data: collections, error } = await supabase
       .from("collections")
       .select("*")
       .order("created_at", { ascending: false });
 
-    console.log("All collections debug:", { allCollections, allError });
-
-    if (allError) {
-      console.error("Database error:", allError);
+    if (error) {
+      return NextResponse.json(
+        { error: "コレクションの取得に失敗しました" },
+        { status: 500 }
+      );
     }
 
     // Filter out hidden collections (those with [HIDDEN] in description)
-    const visibleCollections = (allCollections || []).filter(
+    const visibleCollections = (collections || []).filter(
       collection => !(collection.description && collection.description.includes("[HIDDEN]"))
     );
 
-    console.log("Visible collections after filtering:", visibleCollections);
-
     return NextResponse.json(visibleCollections);
   } catch (error) {
-    console.error("API error:", error);
     return NextResponse.json(
       { error: "サーバーエラーが発生しました" },
       { status: 500 }
@@ -47,12 +41,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Collections POST: checking session...");
     const session = await getSession();
-    console.log("Collections POST: session result:", !!session);
     
     if (!session) {
-      console.log("Collections POST: No session, returning 401");
       return NextResponse.json(
         { error: "認証が必要です" },
         { status: 401 }
@@ -93,7 +84,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Database error:", error);
       return NextResponse.json(
         { error: "コレクションの作成に失敗しました" },
         { status: 500 }
@@ -102,7 +92,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(collection);
   } catch (error) {
-    console.error("API error:", error);
     return NextResponse.json(
       { error: "サーバーエラーが発生しました" },
       { status: 500 }
