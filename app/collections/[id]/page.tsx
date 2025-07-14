@@ -300,6 +300,32 @@ export default function CollectionDetailPage() {
     }
   };
 
+  const handleFixBaseURI = async () => {
+    if (!collection) return;
+
+    setUploading(true);
+    setCsvError("");
+
+    try {
+      const response = await fetch(`/api/collections/${collection.id}/fix-baseuri`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`BaseURIが正常に更新されました！\n新しいBaseURI: ${data.newBaseURI}\nトランザクション: ${data.txHash}`);
+      } else {
+        setCsvError(data.error || "BaseURIの更新に失敗しました");
+      }
+    } catch (error) {
+      console.error("Fix BaseURI error:", error);
+      setCsvError("BaseURI更新中にエラーが発生しました");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -491,19 +517,35 @@ export default function CollectionDetailPage() {
               )}
               
               {collection.contract_address && (
-                <div className="pt-6 border-t border-gray-800">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">コントラクトアドレス</label>
-                  <div className="flex items-center space-x-2">
-                    <p className="text-white font-mono text-sm bg-gray-800 px-3 py-2 rounded">
-                      {collection.contract_address}
+                <div className="pt-6 border-t border-gray-800 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">コントラクトアドレス</label>
+                    <div className="flex items-center space-x-2">
+                      <p className="text-white font-mono text-sm bg-gray-800 px-3 py-2 rounded">
+                        {collection.contract_address}
+                      </p>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(collection.contract_address!)}
+                        className="p-2 bg-gray-800 hover:bg-gray-700 rounded transition-colors"
+                      >
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">NFTメタデータ修正</label>
+                    <p className="text-gray-400 text-sm mb-2">
+                      MetaMaskで画像が表示されない場合は、コントラクトのbaseURIを修正してください
                     </p>
                     <button
-                      onClick={() => navigator.clipboard.writeText(collection.contract_address!)}
-                      className="p-2 bg-gray-800 hover:bg-gray-700 rounded transition-colors"
+                      onClick={handleFixBaseURI}
+                      disabled={uploading}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                     >
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
+                      {uploading ? "修正中..." : "BaseURIを修正"}
                     </button>
                   </div>
                 </div>

@@ -48,7 +48,7 @@ export async function POST(
     }
 
     // Deploy contract - use API endpoint as base URI for individual NFT metadata
-    const baseURI = `https://bscnf-tdistribution.vercel.app/api/collections/${id}/metadata`;
+    const baseURI = `https://bscnf-tdistribution.vercel.app/api/collections/${id}/metadata/`;
     const contractAddress = await deployCollection(
       collection.name,
       collection.symbol,
