@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
-import { mintNFTWithURI } from "@/lib/blockchain";
+import { mintNFT } from "@/lib/blockchain";
 
 export async function POST(
   request: NextRequest,
@@ -80,12 +80,11 @@ export async function POST(
       metadataURI
     });
 
-    // Mint NFT on blockchain with specific URI
-    const txHash = await mintNFTWithURI(
+    // Mint NFT on blockchain (using existing function)
+    const txHash = await mintNFT(
       collection.contract_address,
       wallet_address,
-      finalTokenId,
-      metadataURI
+      finalTokenId
     );
 
     // Save NFT record to database

@@ -47,8 +47,8 @@ export async function POST(
       );
     }
 
-    // Deploy contract - use HTTPS gateway for better MetaMask compatibility
-    const baseURI = `https://gateway.pinata.cloud/ipfs/${collection.metadata_ipfs}`;
+    // Deploy contract - use API endpoint as base URI for individual NFT metadata
+    const baseURI = `https://bscnf-tdistribution.vercel.app/api/collections/${id}/metadata`;
     const contractAddress = await deployCollection(
       collection.name,
       collection.symbol,
