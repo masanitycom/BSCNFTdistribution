@@ -53,15 +53,31 @@ export async function mintNFT(
   tokenId: number
 ): Promise<string> {
   try {
+    console.log("=== BLOCKCHAIN MINT DEBUG ===");
+    console.log("Contract Address:", contractAddress);
+    console.log("To Address (received):", to);
+    console.log("To Address type:", typeof to);
+    console.log("To Address length:", to.length);
+    console.log("Token ID:", tokenId);
+    
     const wallet = getWallet();
+    console.log("Wallet Address:", await wallet.getAddress());
+    
     const contract = new ethers.Contract(
       contractAddress,
       CollectionABI.abi,
       wallet
     );
 
+    console.log("Calling adminMint with:", { to, tokenId });
     const tx = await contract.adminMint(to, tokenId);
+    console.log("Transaction sent:", tx.hash);
+    console.log("Transaction to field:", tx.to);
+    
     const receipt = await tx.wait();
+    console.log("Transaction confirmed:", receipt.hash);
+    console.log("Receipt logs:", receipt.logs);
+    console.log("============================");
     
     return receipt.hash;
   } catch (error) {

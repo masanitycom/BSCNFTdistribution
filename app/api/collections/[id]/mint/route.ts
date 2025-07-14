@@ -20,7 +20,17 @@ export async function POST(
 
     const { wallet_address, recipient_name, token_id } = await request.json();
 
+    console.log("=== MINT REQUEST DEBUG ===");
+    console.log("Raw request body:", await request.clone().text());
+    console.log("Parsed wallet_address:", wallet_address);
+    console.log("wallet_address type:", typeof wallet_address);
+    console.log("wallet_address length:", wallet_address?.length);
+    console.log("recipient_name:", recipient_name);
+    console.log("token_id:", token_id);
+    console.log("========================");
+
     if (!wallet_address || !wallet_address.startsWith("0x")) {
+      console.error("Invalid wallet address:", wallet_address);
       return NextResponse.json(
         { error: "有効なウォレットアドレスを入力してください" },
         { status: 400 }
@@ -73,19 +83,29 @@ export async function POST(
     // Create metadata URI for this specific NFT
     const metadataURI = `https://bscnf-tdistribution.vercel.app/api/collections/${id}/metadata/${finalTokenId}`;
 
-    console.log("Minting NFT:", {
-      contractAddress: collection.contract_address,
-      to: wallet_address,
-      tokenId: finalTokenId,
-      metadataURI
+    console.log("=== BEFORE MINTING ===");
+    console.log("Contract Address:", collection.contract_address);
+    console.log("Recipient Address:", wallet_address);
+    console.log("Token ID:", finalTokenId);
+    console.log("Metadata URI:", metadataURI);
+    console.log("Address validation:", {
+      isString: typeof wallet_address === 'string',
+      startsWith0x: wallet_address.startsWith('0x'),
+      length: wallet_address.length,
+      trimmed: wallet_address.trim()
     });
+    console.log("=====================");
 
     // Mint NFT on blockchain (using existing function)
     const txHash = await mintNFT(
       collection.contract_address,
-      wallet_address,
+      wallet_address.trim(), // Ensure no whitespace
       finalTokenId
     );
+
+    console.log("=== AFTER MINTING ===");
+    console.log("Transaction Hash:", txHash);
+    console.log("====================");
 
     // Save NFT record to database
     const { data: nft, error: nftError } = await supabase
