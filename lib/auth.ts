@@ -15,12 +15,20 @@ export async function createSession(userId: string): Promise<string> {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
-  await supabase.from("sessions").insert({
+  const { data, error } = await supabase.from("sessions").insert({
     user_id: userId,
     token,
     expires_at: expiresAt.toISOString(),
-  });
+  })
+  .select()
+  .single();
 
+  if (error) {
+    console.error("Failed to create session:", error);
+    throw new Error("セッション作成に失敗しました");
+  }
+
+  console.log("Session created successfully:", { userId, token });
   return token;
 }
 
