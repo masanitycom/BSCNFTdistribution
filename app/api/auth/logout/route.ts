@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { logout } from "@/lib/auth";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     await logout();
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Logout error:", error);
     return NextResponse.json(
@@ -14,13 +14,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GETメソッドも追加（直接アクセス用）
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await logout();
-    return NextResponse.redirect(new URL("/login", request.url));
+    // GETリクエストの場合はリダイレクト
+    return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SITE_URL || "https://bscnf-tdistribution.vercel.app"));
   } catch (error) {
     console.error("Logout error:", error);
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/login", process.env.NEXT_PUBLIC_SITE_URL || "https://bscnf-tdistribution.vercel.app"));
   }
 }
