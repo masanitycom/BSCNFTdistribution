@@ -13,3 +13,14 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// GETメソッドも追加（直接アクセス用）
+export async function GET(request: NextRequest) {
+  try {
+    await logout();
+    return NextResponse.redirect(new URL("/login", request.url));
+  } catch (error) {
+    console.error("Logout error:", error);
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+}
