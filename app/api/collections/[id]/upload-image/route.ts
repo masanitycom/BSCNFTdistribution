@@ -83,11 +83,11 @@ export async function POST(
 
     console.log("Image uploaded to IPFS:", imageHash);
 
-    // Create metadata JSON
+    // Create metadata JSON - use HTTPS gateway for better MetaMask compatibility
     const metadata = {
       name: collection.name,
       description: collection.description || "",
-      image: getIPFSProtocolUrl(imageHash),
+      image: `https://gateway.pinata.cloud/ipfs/${imageHash}`,
       attributes: []
     };
 

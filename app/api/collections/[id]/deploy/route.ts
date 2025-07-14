@@ -47,8 +47,8 @@ export async function POST(
       );
     }
 
-    // Deploy contract
-    const baseURI = getIPFSProtocolUrl(collection.metadata_ipfs);
+    // Deploy contract - use HTTPS gateway for better MetaMask compatibility
+    const baseURI = `https://gateway.pinata.cloud/ipfs/${collection.metadata_ipfs}`;
     const contractAddress = await deployCollection(
       collection.name,
       collection.symbol,
