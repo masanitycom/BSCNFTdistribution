@@ -532,7 +532,6 @@ export default function CollectionDetailPage() {
                   )}
                 </div>
               )}
-              </div>
               
               {collection.contract_address && (
                 <div className="pt-6 border-t border-gray-800 space-y-4">
