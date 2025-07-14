@@ -20,23 +20,29 @@ export default function WalletConnect({ onWalletConnected, className = "" }: Wal
   const [chainId, setChainId] = useState<string>("");
 
   useEffect(() => {
-    checkWalletConnection();
+    // Add a small delay to avoid immediate conflicts
+    const timer = setTimeout(() => {
+      checkWalletConnection();
+    }, 100);
     
     if (window.ethereum) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       window.ethereum.on('chainChanged', handleChainChanged);
       
       return () => {
+        clearTimeout(timer);
         if (window.ethereum) {
           window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
           window.ethereum.removeListener('chainChanged', handleChainChanged);
         }
       };
     }
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const checkWalletConnection = async () => {
-    if (window.ethereum) {
+    if (window.ethereum && !isConnecting) {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
@@ -51,7 +57,10 @@ export default function WalletConnect({ onWalletConnected, className = "" }: Wal
           }
         }
       } catch (error) {
-        console.error("Error checking wallet connection:", error);
+        // Ignore errors during initial check to avoid spam
+        if (error.code !== -32002) {
+          console.error("Error checking wallet connection:", error);
+        }
       }
     }
   };
@@ -81,11 +90,23 @@ export default function WalletConnect({ onWalletConnected, className = "" }: Wal
       return;
     }
 
+    if (isConnecting) {
+      return; // Prevent multiple connection attempts
+    }
+
     setIsConnecting(true);
     try {
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
+      // First check if already connected
+      const existingAccounts = await window.ethereum.request({ method: 'eth_accounts' });
+      
+      let accounts;
+      if (existingAccounts.length > 0) {
+        accounts = existingAccounts;
+      } else {
+        accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+      }
 
       if (accounts.length > 0) {
         setIsConnected(true);
@@ -95,15 +116,24 @@ export default function WalletConnect({ onWalletConnected, className = "" }: Wal
         setChainId(chainId);
         
         // Switch to BSC if not already
-        await switchToBSC();
+        if (chainId !== '0x38') {
+          await switchToBSC();
+        }
         
         if (onWalletConnected) {
           onWalletConnected(accounts[0]);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error connecting wallet:", error);
-      alert("ウォレット接続に失敗しました");
+      if (error.code === -32002) {
+        alert("MetaMaskに接続リクエストが既に送信されています。MetaMaskを確認してください。");
+      } else if (error.code === 4001) {
+        // User rejected the request
+        alert("ユーザーがウォレット接続を拒否しました");
+      } else {
+        alert("ウォレット接続に失敗しました");
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -135,9 +165,17 @@ export default function WalletConnect({ onWalletConnected, className = "" }: Wal
               },
             ],
           });
-        } catch (addError) {
+        } catch (addError: any) {
           console.error('Error adding BSC network:', addError);
+          if (addError.code !== 4001) { // Don't alert if user rejected
+            alert('BSCネットワークの追加に失敗しました');
+          }
         }
+      } else if (switchError.code === 4001) {
+        // User rejected the request
+        console.log('User rejected network switch');
+      } else {
+        console.error('Error switching to BSC network:', switchError);
       }
     }
   };
