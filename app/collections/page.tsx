@@ -16,6 +16,7 @@ interface Collection {
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCollections();
@@ -32,6 +33,33 @@ export default function CollectionsPage() {
       console.error("Failed to fetch collections:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteCollection = async (id: string, name: string) => {
+    if (!confirm(`「${name}」を削除してもよろしいですか？\n\n注意: NFTが発行済みの場合は削除できません。`)) {
+      return;
+    }
+
+    setDeleting(id);
+    try {
+      const response = await fetch(`/api/collections/${id}/delete`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCollections(prev => prev.filter(c => c.id !== id));
+        alert("コレクションが削除されました");
+      } else {
+        alert(data.error || "削除に失敗しました");
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("削除中にエラーが発生しました");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -91,12 +119,11 @@ export default function CollectionsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {collections.map((collection) => (
-              <Link
+              <div
                 key={collection.id}
-                href={`/collections/${collection.id}`}
-                className="block group"
+                className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all duration-200"
               >
-                <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-all duration-200 group-hover:bg-gray-900/70">
+                <Link href={`/collections/${collection.id}`} className="block p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="p-3 bg-blue-600/20 rounded-lg">
                       <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +143,7 @@ export default function CollectionsPage() {
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-gray-100">
+                  <h3 className="text-xl font-semibold text-white mb-2">
                     {collection.name}
                   </h3>
                   
@@ -141,14 +168,40 @@ export default function CollectionsPage() {
                     </div>
                   </div>
                   
-                  <div className="mt-4 flex items-center text-gray-500 group-hover:text-gray-400 transition-colors">
+                  <div className="mt-4 flex items-center text-gray-500 hover:text-gray-400 transition-colors">
                     <span className="text-sm">管理</span>
-                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 ml-2 transform hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
+                </Link>
+
+                {/* Delete Button */}
+                <div className="px-6 pb-4">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      deleteCollection(collection.id, collection.name);
+                    }}
+                    disabled={deleting === collection.id}
+                    className="w-full px-3 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 text-red-400 hover:text-red-300 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {deleting === collection.id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin"></div>
+                        <span>削除中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>削除</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
