@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/auth";
-import { mintNFT } from "@/lib/blockchain";
+import { mintNFTWithURI } from "@/lib/blockchain";
 
 export async function POST(
   request: NextRequest,
@@ -70,17 +70,22 @@ export async function POST(
       );
     }
 
+    // Create metadata URI for this specific NFT
+    const metadataURI = `https://bscnf-tdistribution.vercel.app/api/collections/${id}/metadata/${finalTokenId}`;
+
     console.log("Minting NFT:", {
       contractAddress: collection.contract_address,
       to: wallet_address,
-      tokenId: finalTokenId
+      tokenId: finalTokenId,
+      metadataURI
     });
 
-    // Mint NFT on blockchain
-    const txHash = await mintNFT(
+    // Mint NFT on blockchain with specific URI
+    const txHash = await mintNFTWithURI(
       collection.contract_address,
       wallet_address,
-      finalTokenId
+      finalTokenId,
+      metadataURI
     );
 
     // Save NFT record to database

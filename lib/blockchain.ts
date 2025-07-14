@@ -70,6 +70,30 @@ export async function mintNFT(
   }
 }
 
+export async function mintNFTWithURI(
+  contractAddress: string,
+  to: string,
+  tokenId: number,
+  tokenURI: string
+): Promise<string> {
+  try {
+    const wallet = getWallet();
+    const contract = new ethers.Contract(
+      contractAddress,
+      CollectionABI.abi,
+      wallet
+    );
+
+    const tx = await contract.adminMintWithURI(to, tokenId, tokenURI);
+    const receipt = await tx.wait();
+    
+    return receipt.hash;
+  } catch (error) {
+    console.error("Minting with URI error:", error);
+    throw new Error(`NFTのミント（URI付き）に失敗しました: ${error}`);
+  }
+}
+
 export async function batchMintNFTs(
   contractAddress: string,
   recipients: { address: string; tokenId: number }[]
