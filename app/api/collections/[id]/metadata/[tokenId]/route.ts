@@ -8,6 +8,8 @@ export async function GET(
   const { id, tokenId } = await params;
   
   try {
+    console.log("Metadata API called for collection:", id, "token:", tokenId);
+    
     // Get collection
     const { data: collection, error: collectionError } = await supabase
       .from("collections")
@@ -16,11 +18,15 @@ export async function GET(
       .single();
 
     if (collectionError || !collection) {
+      console.error("Collection not found:", collectionError);
       return NextResponse.json(
         { error: "Collection not found" },
         { status: 404 }
       );
     }
+
+    console.log("Collection found:", collection.name);
+    console.log("Image IPFS:", collection.image_ipfs);
 
     // Get NFT
     const { data: nft, error: nftError } = await supabase

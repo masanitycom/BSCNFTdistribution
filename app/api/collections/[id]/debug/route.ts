@@ -12,13 +12,8 @@ export async function GET(
   const { id } = await params;
   
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: "認証が必要です" },
-        { status: 401 }
-      );
-    }
+    // Debug endpoint - no authentication required for troubleshooting
+    console.log("Debug API called for collection:", id);
 
     // Get collection
     const { data: collection, error: collectionError } = await supabase
