@@ -16,7 +16,7 @@ export async function createSession(userId: string): Promise<string> {
   expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
   const { data, error } = await supabase.from("sessions").insert({
-    user_id: userId,
+    admin_user_id: userId,
     token,
     expires_at: expiresAt.toISOString(),
   })
@@ -43,7 +43,10 @@ export async function getSession() {
 
     const { data: session, error } = await supabase
       .from("sessions")
-      .select("*, admin_users(*)")
+      .select(`
+        *,
+        admin_users:admin_user_id (*)
+      `)
       .eq("token", token)
       .single();
 

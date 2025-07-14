@@ -17,7 +17,7 @@ export async function GET() {
     // Check sessions table
     const { data: sessions, error: sessionsError } = await supabase
       .from("sessions")
-      .select("id, user_id, token, expires_at, created_at")
+      .select("id, admin_user_id, token, expires_at, created_at")
       .order("created_at", { ascending: false })
       .limit(5);
     
