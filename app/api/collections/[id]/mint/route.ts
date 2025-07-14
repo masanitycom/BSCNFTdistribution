@@ -18,10 +18,11 @@ export async function POST(
       );
     }
 
-    const { wallet_address, recipient_name, token_id } = await request.json();
+    const requestBody = await request.json();
+    const { wallet_address, recipient_name, token_id } = requestBody;
 
     console.log("=== MINT REQUEST DEBUG ===");
-    console.log("Raw request body:", await request.clone().text());
+    console.log("Request body:", requestBody);
     console.log("Parsed wallet_address:", wallet_address);
     console.log("wallet_address type:", typeof wallet_address);
     console.log("wallet_address length:", wallet_address?.length);
