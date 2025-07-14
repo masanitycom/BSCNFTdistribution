@@ -1,10 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import WalletConnect from "@/components/WalletConnect";
+
+interface DashboardStats {
+  totalCollections: number;
+  totalNFTs: number;
+  totalUsers: number;
+}
 
 export default function DashboardPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalCollections: 0,
+    totalNFTs: 0,
+    totalUsers: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [connectedWallet, setConnectedWallet] = useState<string>("");
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/dashboard/stats");
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const menuItems = [
     {
@@ -73,19 +105,27 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">ダッシュボード</h1>
               <p className="text-gray-400">BSC NFT Distribution System</p>
+              {connectedWallet && (
+                <p className="text-xs text-green-400 mt-1">
+                  MetaMask接続済み: {connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}
+                </p>
+              )}
             </div>
-            <button
-              onClick={async () => {
-                await fetch("/api/auth/logout", { method: "POST" });
-                window.location.href = "/login";
-              }}
-              className="px-6 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm font-medium text-white transition-all duration-200 flex items-center space-x-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span>ログアウト</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <WalletConnect onWalletConnected={setConnectedWallet} />
+              <button
+                onClick={async () => {
+                  await fetch("/api/auth/logout", { method: "POST" });
+                  window.location.href = "/login";
+                }}
+                className="px-6 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm font-medium text-white transition-all duration-200 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span>ログアウト</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -103,7 +143,9 @@ export default function DashboardPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">コレクション数</p>
-                <p className="text-2xl font-bold text-white">0</p>
+                <p className="text-2xl font-bold text-white">
+                  {loading ? "..." : stats.totalCollections}
+                </p>
               </div>
             </div>
           </div>
@@ -117,7 +159,9 @@ export default function DashboardPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">発行済みNFT</p>
-                <p className="text-2xl font-bold text-white">0</p>
+                <p className="text-2xl font-bold text-white">
+                  {loading ? "..." : stats.totalNFTs}
+                </p>
               </div>
             </div>
           </div>
@@ -131,7 +175,9 @@ export default function DashboardPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">配布ジョブ</p>
-                <p className="text-2xl font-bold text-white">0</p>
+                <p className="text-2xl font-bold text-white">
+                  {loading ? "..." : stats.totalUsers}
+                </p>
               </div>
             </div>
           </div>
