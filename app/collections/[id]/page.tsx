@@ -36,12 +36,29 @@ export default function CollectionDetailPage() {
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
   const [csvError, setCsvError] = useState("");
   const [activeTab, setActiveTab] = useState<"info" | "distribute" | "logs">("info");
+  const [nftHistory, setNftHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     if (params.id) {
       fetchCollection(params.id as string);
     }
   }, [params.id]);
+
+  const fetchNFTHistory = async (collectionId: string) => {
+    setHistoryLoading(true);
+    try {
+      const response = await fetch(`/api/collections/${collectionId}/nfts`);
+      if (response.ok) {
+        const data = await response.json();
+        setNftHistory(data.nfts || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch NFT history:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   const fetchCollection = async (id: string) => {
     try {
@@ -267,6 +284,11 @@ export default function CollectionDetailPage() {
         
         // Update collection's next token ID
         setCollection(prev => prev ? { ...prev, next_token_id: (prev.next_token_id || 1) + 1 } : null);
+        
+        // Refresh NFT history if logs tab is active
+        if (activeTab === "logs") {
+          fetchNFTHistory(collection.id);
+        }
       } else {
         setCsvError(data.error || "ミントに失敗しました");
       }
@@ -331,7 +353,12 @@ export default function CollectionDetailPage() {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
+                  onClick={() => {
+                    setActiveTab(tab.key as any);
+                    if (tab.key === "logs" && collection?.id) {
+                      fetchNFTHistory(collection.id);
+                    }
+                  }}
                   className={`
                     py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors
                     ${activeTab === tab.key
@@ -674,20 +701,95 @@ export default function CollectionDetailPage() {
 
           {activeTab === "logs" && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold text-white mb-4">配布ログ</h3>
-                <p className="text-gray-400 mb-6">配布ジョブの実行履歴</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">配布履歴</h3>
+                  <p className="text-gray-400 mb-6">ミントされたNFTの一覧</p>
+                </div>
+                {nftHistory.length > 0 && (
+                  <button
+                    onClick={() => {
+                      window.open(`/api/collections/${collection?.id}/export`, '_blank');
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>CSVダウンロード</span>
+                  </button>
+                )}
               </div>
               
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-xl flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              {historyLoading ? (
+                <div className="text-center py-12">
+                  <div className="w-8 h-8 border-2 border-gray-700 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400">履歴を読み込み中...</p>
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">配布ログがありません</h3>
-                <p className="text-gray-400">まだ配布ジョブが実行されていません</p>
-              </div>
+              ) : nftHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-xl flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-white mb-2">配布履歴がありません</h3>
+                  <p className="text-gray-400">まだNFTがミントされていません</p>
+                </div>
+              ) : (
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-900/50">
+                        <tr className="border-b border-gray-700">
+                          <th className="text-left p-4 text-gray-300">NFT ID</th>
+                          <th className="text-left p-4 text-gray-300">ウォレットアドレス</th>
+                          <th className="text-left p-4 text-gray-300">受取人</th>
+                          <th className="text-left p-4 text-gray-300">ミント日時</th>
+                          <th className="text-left p-4 text-gray-300">トランザクション</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {nftHistory.map((nft, index) => (
+                          <tr key={nft.id} className="border-b border-gray-800 hover:bg-gray-800/30">
+                            <td className="p-4 text-white font-mono font-bold">
+                              #{nft.token_id}
+                            </td>
+                            <td className="p-4 text-gray-300 font-mono text-xs">
+                              {nft.owner_address.slice(0, 6)}...{nft.owner_address.slice(-4)}
+                            </td>
+                            <td className="p-4 text-gray-300">
+                              {nft.recipient_name || '-'}
+                            </td>
+                            <td className="p-4 text-gray-300">
+                              {nft.minted_at ? new Date(nft.minted_at).toLocaleString('ja-JP') : '-'}
+                            </td>
+                            <td className="p-4">
+                              {nft.tx_hash ? (
+                                <a
+                                  href={`https://bscscan.com/tx/${nft.tx_hash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:text-blue-300 font-mono text-xs"
+                                >
+                                  {nft.tx_hash.slice(0, 10)}...
+                                </a>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="p-4 bg-gray-900/50 border-t border-gray-700">
+                    <p className="text-gray-400 text-sm">
+                      合計 {nftHistory.length} 個のNFTが配布されました
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
