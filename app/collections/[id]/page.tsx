@@ -241,10 +241,12 @@ export default function CollectionDetailPage() {
     const walletInput = document.getElementById("individual-wallet") as HTMLInputElement;
     const nameInput = document.getElementById("individual-name") as HTMLInputElement;
     const tokenIdInput = document.getElementById("individual-token-id") as HTMLInputElement;
+    const quantityInput = document.getElementById("individual-quantity") as HTMLInputElement;
 
     const walletAddress = walletInput?.value.trim();
     const recipientName = nameInput?.value.trim();
-    const tokenId = tokenIdInput?.value ? parseInt(tokenIdInput.value) : null;
+    const startTokenId = tokenIdInput?.value ? parseInt(tokenIdInput.value) : null;
+    const quantity = quantityInput?.value ? parseInt(quantityInput.value) : 1;
 
     if (!walletAddress) {
       setCsvError("ウォレットアドレスを入力してください");
@@ -256,41 +258,81 @@ export default function CollectionDetailPage() {
       return;
     }
 
+    if (quantity <= 0 || quantity > 500) {
+      setCsvError("数量は1～500の範囲で入力してください");
+      return;
+    }
+
     setUploading(true);
     setCsvError("");
 
     try {
-      const response = await fetch(`/api/collections/${collection.id}/mint`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wallet_address: walletAddress,
-          recipient_name: recipientName || null,
-          token_id: tokenId
-        }),
-      });
+      if (quantity === 1) {
+        // Single mint
+        const response = await fetch(`/api/collections/${collection.id}/mint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            wallet_address: walletAddress,
+            recipient_name: recipientName || null,
+            token_id: startTokenId
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        // Clear form
-        if (walletInput) walletInput.value = "";
-        if (nameInput) nameInput.value = "";
-        if (tokenIdInput) tokenIdInput.value = "";
+        if (response.ok) {
+          // Clear form
+          if (walletInput) walletInput.value = "";
+          if (nameInput) nameInput.value = "";
+          if (tokenIdInput) tokenIdInput.value = "";
+          if (quantityInput) quantityInput.value = "1";
 
-        // Show success message
-        setCsvError("");
-        alert(`NFTのミントが完了しました！\nトークンID: ${data.nft.tokenId}\nトランザクション: ${data.nft.txHash}`);
-        
-        // Update collection's next token ID
-        setCollection(prev => prev ? { ...prev, next_token_id: (prev.next_token_id || 1) + 1 } : null);
-        
-        // Refresh NFT history if logs tab is active
-        if (activeTab === "logs") {
-          fetchNFTHistory(collection.id);
+          // Show success message
+          setCsvError("");
+          alert(`NFTのミントが完了しました！\nトークンID: ${data.nft.tokenId}\nトランザクション: ${data.nft.txHash}`);
+          
+          // Update collection's next token ID
+          setCollection(prev => prev ? { ...prev, next_token_id: (prev.next_token_id || 1) + 1 } : null);
+        } else {
+          setCsvError(data.error || "ミントに失敗しました");
         }
       } else {
-        setCsvError(data.error || "ミントに失敗しました");
+        // Batch mint
+        const response = await fetch(`/api/collections/${collection.id}/batch-mint`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            wallet_address: walletAddress,
+            recipient_name: recipientName || null,
+            start_token_id: startTokenId,
+            quantity: quantity
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Clear form
+          if (walletInput) walletInput.value = "";
+          if (nameInput) nameInput.value = "";
+          if (tokenIdInput) tokenIdInput.value = "";
+          if (quantityInput) quantityInput.value = "1";
+
+          // Show success message
+          setCsvError("");
+          alert(`バッチミントが完了しました！\n数量: ${quantity}\nトークンID: ${data.startTokenId} - ${data.endTokenId}\n完了: ${data.successCount}/${data.totalCount}`);
+          
+          // Update collection's next token ID
+          setCollection(prev => prev ? { ...prev, next_token_id: data.nextTokenId } : null);
+        } else {
+          setCsvError(data.error || "バッチミントに失敗しました");
+        }
+      }
+        
+      // Refresh NFT history if logs tab is active
+      if (activeTab === "logs") {
+        fetchNFTHistory(collection.id);
       }
     } catch (error) {
       console.error("Individual mint error:", error);
@@ -576,8 +618,8 @@ export default function CollectionDetailPage() {
             <div className="space-y-8">
               {/* Individual Mint Section */}
               <div>
-                <h3 className="text-xl font-semibold text-white mb-4">個別配布</h3>
-                <p className="text-gray-400 mb-6">1つのNFTを指定したウォレットアドレスに送信</p>
+                <h3 className="text-xl font-semibold text-white mb-4">NFTミント</h3>
+                <p className="text-gray-400 mb-6">1つまたは複数のNFTを指定したウォレットアドレスに送信</p>
                 
                 {!collection.contract_address && (
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
@@ -618,23 +660,65 @@ export default function CollectionDetailPage() {
                         />
                       </div>
                     </div>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        NFT ID（任意：空白でランダム生成）
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="例: 123"
-                        className="w-full md:w-48 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                        id="individual-token-id"
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          数量
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="1"
+                          min="1"
+                          max="500"
+                          defaultValue="1"
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                          id="individual-quantity"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          開始NFT ID（任意：空白でランダム生成）
+                        </label>
+                        <input
+                          type="number"
+                          placeholder="例: 123"
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                          id="individual-token-id"
+                        />
+                      </div>
                     </div>
+                    
+                    {/* Batch mint warning */}
+                    <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <div className="flex items-start">
+                        <svg className="w-5 h-5 text-blue-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-blue-300">
+                            <strong>バッチミント機能:</strong> 複数のNFTを同じアドレスに一度に送信できます
+                          </p>
+                          <p className="text-xs text-blue-400 mt-1">
+                            • 大量ミント時は時間がかかる場合があります（1秒間隔で処理）<br/>
+                            • 処理中はページを閉じないでください
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <button
                       onClick={handleIndividualMint}
                       disabled={uploading}
                       className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {uploading ? "ミント中..." : "NFTを送信"}
+                      {uploading ? (
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                          ミント中...
+                        </div>
+                      ) : (
+                        "NFTを送信"
+                      )}
                     </button>
                   </div>
                 )}
