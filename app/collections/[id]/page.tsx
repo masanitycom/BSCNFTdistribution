@@ -121,24 +121,45 @@ export default function CollectionDetailPage() {
     const file = event.target.files?.[0];
     if (!file || !collection) return;
 
+    console.log("Image upload started:", {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      collectionId: collection.id
+    });
+
     setUploading(true);
+    setCsvError("");
+    
     try {
       const formData = new FormData();
       formData.append("image", file);
+
+      console.log("Sending upload request...");
 
       const response = await fetch(`/api/collections/${collection.id}/upload-image`, {
         method: "POST",
         body: formData,
       });
 
+      console.log("Upload response:", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
+      const data = await response.json();
+      console.log("Upload response data:", data);
+
       if (response.ok) {
-        const data = await response.json();
         setCollection(prev => prev ? { ...prev, image_ipfs: data.imageHash } : null);
+        console.log("Image upload successful:", data.imageHash);
       } else {
-        const data = await response.json();
+        console.error("Upload failed:", data);
         setCsvError(data.error || "画像のアップロードに失敗しました");
       }
     } catch (error) {
+      console.error("Upload error:", error);
       setCsvError("画像のアップロード中にエラーが発生しました");
     } finally {
       setUploading(false);
