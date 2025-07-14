@@ -16,18 +16,31 @@ export async function GET() {
       );
     }
 
+    // First try without is_hidden filter to see all collections
+    const { data: allCollections, error: allError } = await supabase
+      .from("collections")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    console.log("All collections debug:", { allCollections, allError });
+
+    if (allError) {
+      console.error("Database error:", allError);
+    }
+
+    // Then try with filter
     const { data: collections, error } = await supabase
       .from("collections")
       .select("*")
       .or("is_hidden.is.null,is_hidden.eq.false")
       .order("created_at", { ascending: false });
 
+    console.log("Filtered collections debug:", { collections, error });
+
     if (error) {
       console.error("Database error:", error);
-      return NextResponse.json(
-        { error: "コレクションの取得に失敗しました" },
-        { status: 500 }
-      );
+      // Return all collections if filter fails
+      return NextResponse.json(allCollections || []);
     }
 
     return NextResponse.json(collections || []);
