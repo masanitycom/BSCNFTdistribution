@@ -4,8 +4,12 @@ import { getSession } from "@/lib/auth";
 
 export async function GET() {
   try {
+    console.log("Collections GET: checking session...");
     const session = await getSession();
+    console.log("Collections GET: session result:", !!session);
+    
     if (!session) {
+      console.log("Collections GET: No session, returning 401");
       return NextResponse.json(
         { error: "認証が必要です" },
         { status: 401 }
@@ -37,8 +41,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("Collections POST: checking session...");
     const session = await getSession();
+    console.log("Collections POST: session result:", !!session);
+    
     if (!session) {
+      console.log("Collections POST: No session, returning 401");
       return NextResponse.json(
         { error: "認証が必要です" },
         { status: 401 }

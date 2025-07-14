@@ -81,6 +81,8 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    console.log("Login successful, cookie set for token:", token);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Login error:", error);

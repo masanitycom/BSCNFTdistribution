@@ -25,22 +25,38 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("session")?.value;
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session")?.value;
 
-  if (!token) return null;
+    console.log("Session token:", token ? "exists" : "missing");
 
-  const { data: session } = await supabase
-    .from("sessions")
-    .select("*, admin_users(*)")
-    .eq("token", token)
-    .single();
+    if (!token) return null;
 
-  if (!session || new Date(session.expires_at) < new Date()) {
+    const { data: session, error } = await supabase
+      .from("sessions")
+      .select("*, admin_users(*)")
+      .eq("token", token)
+      .single();
+
+    console.log("Session query result:", { session: !!session, error });
+
+    if (error || !session) {
+      console.log("No valid session found");
+      return null;
+    }
+
+    if (new Date(session.expires_at) < new Date()) {
+      console.log("Session expired");
+      return null;
+    }
+
+    console.log("Valid session found");
+    return session;
+  } catch (error) {
+    console.error("getSession error:", error);
     return null;
   }
-
-  return session;
 }
 
 export async function logout() {
