@@ -218,6 +218,66 @@ export default function CollectionDetailPage() {
     }
   };
 
+  const handleIndividualMint = async () => {
+    if (!collection) return;
+
+    const walletInput = document.getElementById("individual-wallet") as HTMLInputElement;
+    const nameInput = document.getElementById("individual-name") as HTMLInputElement;
+    const tokenIdInput = document.getElementById("individual-token-id") as HTMLInputElement;
+
+    const walletAddress = walletInput?.value.trim();
+    const recipientName = nameInput?.value.trim();
+    const tokenId = tokenIdInput?.value ? parseInt(tokenIdInput.value) : null;
+
+    if (!walletAddress) {
+      setCsvError("ウォレットアドレスを入力してください");
+      return;
+    }
+
+    if (!walletAddress.startsWith("0x") || walletAddress.length !== 42) {
+      setCsvError("有効なウォレットアドレスを入力してください");
+      return;
+    }
+
+    setUploading(true);
+    setCsvError("");
+
+    try {
+      const response = await fetch(`/api/collections/${collection.id}/mint`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet_address: walletAddress,
+          recipient_name: recipientName || null,
+          token_id: tokenId
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Clear form
+        if (walletInput) walletInput.value = "";
+        if (nameInput) nameInput.value = "";
+        if (tokenIdInput) tokenIdInput.value = "";
+
+        // Show success message
+        setCsvError("");
+        alert(`NFTのミントが完了しました！\nトークンID: ${data.nft.tokenId}\nトランザクション: ${data.nft.txHash}`);
+        
+        // Update collection's next token ID
+        setCollection(prev => prev ? { ...prev, next_token_id: (prev.next_token_id || 1) + 1 } : null);
+      } else {
+        setCsvError(data.error || "ミントに失敗しました");
+      }
+    } catch (error) {
+      console.error("Individual mint error:", error);
+      setCsvError("ミント中にエラーが発生しました");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -425,9 +485,76 @@ export default function CollectionDetailPage() {
           )}
 
           {activeTab === "distribute" && (
-            <div className="space-y-6">
+            <div className="space-y-8">
+              {/* Individual Mint Section */}
               <div>
-                <h3 className="text-xl font-semibold text-white mb-4">CSV配布</h3>
+                <h3 className="text-xl font-semibold text-white mb-4">個別配布</h3>
+                <p className="text-gray-400 mb-6">1つのNFTを指定したウォレットアドレスに送信</p>
+                
+                {!collection.contract_address && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <svg className="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-sm text-yellow-300">
+                        配布を行うには、まず基本情報タブでコントラクトをデプロイしてください
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {collection.contract_address && (
+                  <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          ウォレットアドレス *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="0x..."
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                          id="individual-wallet"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          受取人名（任意）
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="田中太郎"
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                          id="individual-name"
+                        />
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        NFT ID（任意：空白でランダム生成）
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="例: 123"
+                        className="w-full md:w-48 px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                        id="individual-token-id"
+                      />
+                    </div>
+                    <button
+                      onClick={handleIndividualMint}
+                      disabled={uploading}
+                      className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {uploading ? "ミント中..." : "NFTを送信"}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* CSV Batch Distribution Section */}
+              <div className="border-t border-gray-800 pt-8">
+                <h3 className="text-xl font-semibold text-white mb-4">CSV一括配布</h3>
                 <p className="text-gray-400 mb-6">CSVファイルをアップロードしてNFTを一括配布</p>
               </div>
 
