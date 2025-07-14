@@ -4,8 +4,9 @@ import { getSession } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await getSession();
     if (!session) {
@@ -28,7 +29,7 @@ export async function POST(
     const { data: collection, error: collectionError } = await supabase
       .from("collections")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (collectionError || !collection) {
@@ -42,7 +43,7 @@ export async function POST(
     const { data: job, error: jobError } = await supabase
       .from("distribution_jobs")
       .insert({
-        collection_id: params.id,
+        collection_id: id,
         csv_original: csvData,
         status: "PENDING",
       })
