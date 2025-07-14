@@ -33,8 +33,12 @@ export default function GalleryPage() {
         const data = await response.json();
         setNfts(data.nfts);
         
-        // Extract unique collections
-        const uniqueCollections = [...new Set(data.nfts.map((nft: NFTDisplay) => nft.collection.name))] as string[];
+        // Extract unique collections with null check
+        const uniqueCollections = [...new Set(
+          data.nfts
+            .filter((nft: NFTDisplay) => nft.collection && nft.collection.name)
+            .map((nft: NFTDisplay) => nft.collection.name)
+        )] as string[];
         setCollections(uniqueCollections);
       }
     } catch (error) {
@@ -46,7 +50,7 @@ export default function GalleryPage() {
 
   const filteredNFTs = filter === "all" 
     ? nfts 
-    : nfts.filter(nft => nft.collection.name === filter);
+    : nfts.filter(nft => nft.collection && nft.collection.name === filter);
 
   return (
     <div className="min-h-screen bg-black p-6">

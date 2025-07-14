@@ -9,7 +9,9 @@ export async function GET() {
         *,
         collections(name, symbol, image_ipfs)
       `)
-      .order("minted_at", { ascending: false });
+      .order("created_at", { ascending: false });
+
+    console.log("Gallery NFTs debug:", { nfts, error });
 
     if (error) {
       console.error("Database error:", error);
@@ -19,9 +21,17 @@ export async function GET() {
       );
     }
 
+    // Transform data to match expected structure
+    const transformedNFTs = (nfts || []).map(nft => ({
+      ...nft,
+      collection: nft.collections // Supabase returns as 'collections'
+    }));
+
+    console.log("Transformed NFTs:", transformedNFTs);
+
     return NextResponse.json({
-      nfts: nfts || [],
-      count: nfts?.length || 0
+      nfts: transformedNFTs,
+      count: transformedNFTs.length
     });
   } catch (error) {
     console.error("API error:", error);
