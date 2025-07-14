@@ -8,6 +8,7 @@ interface Collection {
   name: string;
   symbol: string;
   description?: string;
+  image_ipfs?: string;
   contract_address?: string;
   next_token_id: number;
   created_at: string;
@@ -123,25 +124,52 @@ export default function CollectionsPage() {
                 key={collection.id}
                 className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all duration-200"
               >
-                <Link href={`/collections/${collection.id}`} className="block p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-blue-600/20 rounded-lg">
-                      <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {collection.contract_address ? (
-                        <span className="px-2 py-1 bg-green-600/20 text-green-400 text-xs rounded-full">
-                          デプロイ済み
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-yellow-600/20 text-yellow-400 text-xs rounded-full">
-                          未デプロイ
-                        </span>
-                      )}
+                <Link href={`/collections/${collection.id}`} className="block">
+                  {/* Collection Image */}
+                  <div className="aspect-square bg-gray-800 rounded-t-xl overflow-hidden">
+                    {collection.image_ipfs ? (
+                      <img
+                        src={`https://gateway.pinata.cloud/ipfs/${collection.image_ipfs}`}
+                        alt={collection.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling!.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ display: collection.image_ipfs ? 'none' : 'flex' }}
+                    >
+                      <div className="text-center">
+                        <svg className="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-gray-500 text-sm">画像なし</p>
+                      </div>
                     </div>
                   </div>
+                  
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="p-3 bg-blue-600/20 rounded-lg">
+                        <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {collection.contract_address ? (
+                          <span className="px-2 py-1 bg-green-600/20 text-green-400 text-xs rounded-full">
+                            デプロイ済み
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-yellow-600/20 text-yellow-400 text-xs rounded-full">
+                            未デプロイ
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   
                   <h3 className="text-xl font-semibold text-white mb-2">
                     {collection.name}
@@ -168,11 +196,12 @@ export default function CollectionsPage() {
                     </div>
                   </div>
                   
-                  <div className="mt-4 flex items-center text-gray-500 hover:text-gray-400 transition-colors">
-                    <span className="text-sm">管理</span>
-                    <svg className="w-4 h-4 ml-2 transform hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <div className="mt-4 flex items-center text-gray-500 hover:text-gray-400 transition-colors">
+                      <span className="text-sm">管理</span>
+                      <svg className="w-4 h-4 ml-2 transform hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </div>
                 </Link>
 
