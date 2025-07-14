@@ -18,6 +18,7 @@ export default function CollectionsPage() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [hiding, setHiding] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCollections();
@@ -61,6 +62,33 @@ export default function CollectionsPage() {
       alert("削除中にエラーが発生しました");
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const hideCollection = async (id: string, name: string) => {
+    if (!confirm(`「${name}」を非表示にしますか？\n\n非表示にしても、発行済みのNFTには影響しません。`)) {
+      return;
+    }
+
+    setHiding(id);
+    try {
+      const response = await fetch(`/api/collections/${id}/hide`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCollections(prev => prev.filter(c => c.id !== id));
+        alert("コレクションを非表示にしました");
+      } else {
+        alert(data.error || "非表示に失敗しました");
+      }
+    } catch (error) {
+      console.error("Hide error:", error);
+      alert("非表示中にエラーが発生しました");
+    } finally {
+      setHiding(null);
     }
   };
 
@@ -208,8 +236,33 @@ export default function CollectionsPage() {
                   </div>
                 </Link>
 
-                {/* Delete Button */}
-                <div className="px-6 pb-4">
+                {/* Action Buttons */}
+                <div className="px-6 pb-4 space-y-2">
+                  {/* Hide Button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      hideCollection(collection.id, collection.name);
+                    }}
+                    disabled={hiding === collection.id}
+                    className="w-full px-3 py-2 bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-600/30 text-yellow-400 hover:text-yellow-300 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {hiding === collection.id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-yellow-400/30 border-t-yellow-400 rounded-full animate-spin"></div>
+                        <span>非表示中...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L8.464 8.464M9.878 9.878L12 12m6.121-6.121A10.05 10.05 0 0112 5c4.478 0 8.268 2.943 9.543 7a9.97 9.97 0 01-1.563 3.029m-5.858-.908a3 3 0 01-4.243-4.243m1.414-1.414L8.464 8.464M12 12l2.121-2.121" />
+                        </svg>
+                        <span>非表示</span>
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Delete Button */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();

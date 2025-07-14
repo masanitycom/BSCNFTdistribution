@@ -19,6 +19,7 @@ export async function GET() {
     const { data: collections, error } = await supabase
       .from("collections")
       .select("*")
+      .is("is_hidden", false)
       .order("created_at", { ascending: false });
 
     if (error) {
