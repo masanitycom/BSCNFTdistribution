@@ -20,7 +20,7 @@ export async function POST(
     // Check if collection exists
     const { data: collection, error: fetchError } = await supabase
       .from("collections")
-      .select("id, name, contract_address")
+      .select("id, name, contract_address, description")
       .eq("id", id)
       .single();
 
