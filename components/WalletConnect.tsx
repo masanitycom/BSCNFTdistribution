@@ -56,9 +56,9 @@ export default function WalletConnect({ onWalletConnected, className = "" }: Wal
             onWalletConnected(accounts[0]);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         // Ignore errors during initial check to avoid spam
-        if (error.code !== -32002) {
+        if (error?.code !== -32002) {
           console.error("Error checking wallet connection:", error);
         }
       }
