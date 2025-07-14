@@ -350,7 +350,7 @@ export default function CollectionDetailPage() {
   return (
     <div className="min-h-screen bg-black p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+        {/* Header section */}
         <div className="mb-8">
           <div className="flex items-center mb-4">
             <Link
