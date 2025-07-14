@@ -512,27 +512,27 @@ export default function CollectionDetailPage() {
 
               {/* Deploy Button Section */}
               {!collection.contract_address && (
-
-                    {/* Deploy Button */}
-                    {collection.image_ipfs && (
-                      <button
-                        onClick={handleDeploy}
-                        disabled={uploading}
-                        className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {uploading ? (
-                          <div className="flex items-center justify-center">
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                            デプロイ中...
-                          </div>
-                        ) : (
-                          "BSCにデプロイ"
-                        )}
-                      </button>
-                    )}
-                  </div>
+                <div>
+                  {/* Deploy Button */}
+                  {collection.image_ipfs && (
+                    <button
+                      onClick={handleDeploy}
+                      disabled={uploading}
+                      className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {uploading ? (
+                        <div className="flex items-center justify-center">
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                          デプロイ中...
+                        </div>
+                      ) : (
+                        "BSCにデプロイ"
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
+              </div>
               
               {collection.contract_address && (
                 <div className="pt-6 border-t border-gray-800 space-y-4">
