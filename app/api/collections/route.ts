@@ -28,22 +28,14 @@ export async function GET() {
       console.error("Database error:", allError);
     }
 
-    // Then try with filter
-    const { data: collections, error } = await supabase
-      .from("collections")
-      .select("*")
-      .or("is_hidden.is.null,is_hidden.eq.false")
-      .order("created_at", { ascending: false });
+    // Filter out hidden collections (those with [HIDDEN] in description)
+    const visibleCollections = (allCollections || []).filter(
+      collection => !(collection.description && collection.description.includes("[HIDDEN]"))
+    );
 
-    console.log("Filtered collections debug:", { collections, error });
+    console.log("Visible collections after filtering:", visibleCollections);
 
-    if (error) {
-      console.error("Database error:", error);
-      // Return all collections if filter fails
-      return NextResponse.json(allCollections || []);
-    }
-
-    return NextResponse.json(collections || []);
+    return NextResponse.json(visibleCollections);
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json(
