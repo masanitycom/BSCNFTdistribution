@@ -567,6 +567,8 @@ export default function CollectionDetailPage() {
                   </div>
                 </div>
               )}
+                </div>
+              </div>
             </div>
           )}
 
